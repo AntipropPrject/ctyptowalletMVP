@@ -1,4 +1,5 @@
 import itertools
+from typing import Any
 
 from sqlalchemy import String, Column, select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +16,8 @@ class ContentUnit(BotBase):
     text = Column(String)
     media_id = Column(String)
     media_type = Column(String)
+
+    _formatting_vars = dict()
 
     @AlchemyMaster.alchemy_session
     async def add(self, alchemy_session: AsyncSession):
@@ -36,6 +39,7 @@ class ContentUnit(BotBase):
         if not unit:
             main_logger.infolog.info(f"There is no content unit at tag {self.tag}, returning empty string.")
             unit = ContentUnit(tag=self.tag, text=str())
+        unit.__dict__['formatting_vars'] = dict()
         return unit
 
     @AlchemyMaster.alchemy_session
@@ -51,3 +55,19 @@ class ContentUnit(BotBase):
         tags = (await alchemy_session.execute(query)).all()
         tags_unpacked = tuple(itertools.chain(*tags))
         return tags_unpacked
+
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self.formatting_vars = dict()
+
+    def add_formatting_vars(self, **kwargs):
+        self.__dict__['_formatting_vars'] = kwargs
+
+    def formatted_text(self):
+        txt = self.text
+        for var in self._formatting_vars:
+            try:
+                txt = txt.replace(f"{ '{' + var + '}' }", str(self._formatting_vars[var]))
+            except Exception as err:
+                main_logger.infolog.warn(f'Unknown error {err} in {self.tag} text')
+        return txt

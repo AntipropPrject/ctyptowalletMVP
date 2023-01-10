@@ -1,5 +1,3 @@
-from typing import Any
-
 from sqlalchemy import Column, String, BigInteger, ForeignKey, Integer
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
@@ -7,37 +5,19 @@ from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy_utils import StringEncryptedType
 from sqlalchemy_utils.types.encrypted.encrypted_type import AesEngine
 
-from Dao.DB_Postgres.session import Base, AlchemyMaster
+from Dao.DB_Postgres.session import Base
 from Dao.models.Token import Token
 from Dao.models.Transaction import Transaction
 from Dao.models.models import address_tokens
-from bata import Data
+from _config.variables import Data
 
 
 class Address(Base):
     __tablename__ = "addresses"
 
-
-    # def __init__(self, *args: Any, **kwargs: Any):
-    #     super().__init__(*args, **kwargs)
-    #     self.private_key_column_args = self.get_private_key_column_args()
-    #
-    #
-    # def get_private_key_column_args(self) -> StringEncryptedType or String:
-    #     q = "select address from addresses " \
-    #         "where private_key like '%=%';"
-    #     session = await AlchemyMaster.create_session()
-    #     async with session() as s:
-    #         result = await s.execute(q)
-    #         if self.address in result.unique().scalars():
-    #             return StringEncryptedType(String, Data.secret_key, AesEngine)
-    #         else:
-    #             return String
-
-
     address = Column(String, primary_key=True)
-
-    private_key = Column(StringEncryptedType(String, Data.secret_key, AesEngine))  # TODO вот здесь заруба...
+    name = Column(StringEncryptedType(String, Data.secret_key, AesEngine), nullable=True)
+    private_key = Column(StringEncryptedType(String, Data.secret_key, AesEngine))
     path_index = Column(Integer, default=0)
 
     wallet_id = Column(BigInteger, ForeignKey('wallets.id', onupdate="CASCADE", ondelete="CASCADE"))
@@ -53,18 +33,22 @@ class Address(Base):
 
     token_list = association_proxy("tokens", "contract_Id", creator=lambda tokens: Token(contract_Id=tokens))
 
-
     def get_address_freezed_fee(self,
-                                token_name: str = None) -> float:
+                                token_name: str) -> float:
         freezed_fee: float = 0
         for transaction in self.transactions.values():
-            if transaction.service_fee is not None:
-                freezed_fee = freezed_fee + transaction.service_fee
-            else:
-                break
+            if transaction.token.token_name == token_name:
+                if transaction.service_fee is not None:
+                    freezed_fee = freezed_fee + transaction.service_fee
+                else:
+                    break
         return freezed_fee
 
+    def __eq__(self, other):
+        other: Address
+        return self.address == other.address, self.private_key == other.private_key, self.path_index == other.path_index
 
+    # Что это?
     def __count_transactions_in_db(self):
         transactions_in = dict(filter(lambda x: x.is_In(), self.transactions.values()))
         wallet = self.wallet
@@ -73,7 +57,7 @@ class Address(Base):
         print(transactions_in)
         return transactions_in  # , transactions_out
 
-
+    # Что это?
     # async def __get_transactions_from_blockchain(self):
     #
     #

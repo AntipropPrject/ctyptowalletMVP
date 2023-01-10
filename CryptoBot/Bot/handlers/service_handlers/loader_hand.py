@@ -1,7 +1,7 @@
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import Message
 
-from bata import Data
+from _config.variables import Data
 
 
 async def loader(message: Message, chait_id: int, stage: int, text: str):

@@ -8,6 +8,7 @@ asyncpg==0.27.0
 sqlalchemy-utils==0.38.3
 cryptography==38.0.3
 hdwallet==2.1.2
+eth-abi==3.0.1
 web3>=6.0.0b8
 requests==2.28.1
 qrcode==7.3.1
@@ -15,3 +16,6 @@ Image==1.5.33
 fastapi==0.87.0
 uvicorn==0.20.0
 python-multipart==0.0.5
+segno
+qrcode-artistic
+colorama

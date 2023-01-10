@@ -13,6 +13,7 @@ router = Router()
 router.include_router(admin_manage_hand.router)
 router.include_router(content_manage_hand.router)
 
+
 @router.message(Command("admin"), IsAdmin())
 @MManager.garbage_manage()
 async def admin_start(message: Message, state: FSMContext):

@@ -1,34 +1,25 @@
-import asyncio
-import json
-
-import requests
 from aiogram import Router, Bot
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from requests import HTTPError
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy_utils.types.encrypted.encrypted_type import AesEngine
 
 from Bot.filters.auth_filter import NotAuthFilter
 from Bot.handlers.main_handlers.auth_hand import you_need_tb_authenticated
-from Bot.handlers.main_handlers.main_menu_hand import main_menu, title_entry_point
+from Bot.handlers.main_handlers.main_menu_hand import title_entry_point
 from Bot.keyboards.main_keys import main_menu_kb
 # from Bot.utilts.USDT_Calculator import USDT_Calculator
 from Bot.utilts.mmanager import MManager
-from Dao.DB_Postgres.session import AlchemyMaster
+from Dao.DB_Redis import DataRedis
 from Dao.models.Address import Address
 from Dao.models.Owner import Owner
 from Dao.models.Token import Token
 from Dao.models.Transaction import Transaction
 from Dao.models.Wallet import Wallet
-from Services.CryptoMakers.Tron.Tron_Maker import Tron_Maker
-from Services.EntServices.AddressService import AddressService
-from bata import Data
-from Services.EntServices.OwnerService import OwnerService
-from Services.EntServices.TokenService import TokenService
-from bata import Data
+from Dao.models.bot_models import ContentUnit
+from Services.CryptoMakers.address_gen import Wallet_web3
+from Services.EntServices.TransactionService import TransactionService
 
 router = Router()
 
@@ -44,6 +35,17 @@ async def commands_start(message: Message, state: FSMContext, session: AsyncSess
         await you_need_tb_authenticated(message, state, bot)
     else:
         await title_entry_point(message, state, bot)
+
+
+@router.message(Command("exit"))
+@MManager.garbage_manage()
+async def commands_exit(message: Message, state: FSMContext, bot: Bot):
+    await DataRedis.log_off(message.from_user.id)
+    await MManager.clean(state, bot, message.chat.id, deep=True)
+    await state.clear()
+    content: ContentUnit = await ContentUnit(tag="bye_bye").get()
+    await MManager.content_surf(message, state, bot, content,
+                                placeholder_text='Вы были разлогинены\n\nЖдем вас снова!')
 
 
 @router.message(Command("generate"))
@@ -105,15 +107,16 @@ async def commands_start(message: Message, state: FSMContext, session: AsyncSess
 
 
 @router.message(Command("test"))
-async def ttt(message: Message):
-    session = await AlchemyMaster.create_session()
-    async with session() as s:
-        address: Address = await s.get(Address, "TFA3cwnVvj5HgeBGoQfYKjbKyYK6WgA7jQ")
-        maker = Tron_Maker()
-        await maker.request_transaction_history_from_tron_api(address)
-        print(address.private_key)
-        print(address.address)
-        print(await address.public_fun())
+async def ttt(message: Message, session: AsyncSession):
+    user_id = message.from_user.id
+    u_id = await DataRedis.find_user(user_id)
+    owner: Owner = await session.get(Owner, u_id)
+    wallet = [owner.wallets[wallet] for wallet in owner.wallets if owner.wallets[wallet].blockchain == 'tron'][0]
+    mnemonic = wallet.mnemonic
+    await Wallet_web3().create_wallet(blockchain=wallet.blockchain, u_id=u_id, wallet_name='asd', mnemonic=mnemonic,
+                                    path_index=3)
+    trans_list = await TransactionService.get_user_transactions(u_id, transaction_type='sending')
+    print(trans_list)
 
 
 @router.message(Command("try"))
@@ -125,7 +128,7 @@ async def asd(message: Message, session: AsyncSession, state: FSMContext, bot: B
     address = wallet.addresses.get("TTwG26XCBQZvu3Xdi8BXtsqKGGLQFdTnea")
     token_list = address.tokens
     print(f'token - {token_list[0].token_name}')
-    transaction = await AddressService.createTransaction(address=address,
+    transaction = await createTransaction(address=address,
                                                          amount=50,
                                                          token=token_list[0],
                                                          to_address="THMxwS8Rq21jVtySrjipD5rU5h32XDj51V")

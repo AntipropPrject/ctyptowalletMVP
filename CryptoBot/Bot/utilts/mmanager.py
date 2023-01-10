@@ -6,9 +6,8 @@ from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardMarkup, Message, \
-    Update, CallbackQuery, InputMedia
+    Update, CallbackQuery
 
-from AllLogs.bot_logger import main_logger
 from Bot.utilts.ContentService import ContentService
 from Dao.models.bot_models import ContentUnit
 
@@ -99,21 +98,17 @@ class MManager:
             """
 
             async def wrap(*args, **kwargs):
-                update: Update = kwargs.get("event_update")
                 state: FSMContext = kwargs.get("state")
                 tg_obj = None
-                if update:
-                    if update.message:
-                        tg_obj = update.message
-                    elif update.callback_query:
-                        tg_obj = update.callback_query
+                if isinstance(kwargs.get('event'), Message):
+                    tg_obj = kwargs.get('event')
+                elif isinstance(kwargs.get('event_update'), Update):
+                    tg_obj = kwargs.get('event_update').callback_query
                 if tg_obj:
                     message_id = tg_obj.message_id if isinstance(tg_obj, Message) else tg_obj.message.message_id
                     if store:
                         await MManager.garbage_store(state, message_id)
                 prepared_kwargs = {k: v for k, v in kwargs.items() if k in inspect.getfullargspec(some_handler).args}
-                # print(prepared_kwargs)
-                # partal = functools.partial(some_handler, tg_object, **prepared_kwargs)
                 await some_handler(*args, **prepared_kwargs)
                 if clean and tg_obj:
                     bot: Bot = kwargs.get("bot")

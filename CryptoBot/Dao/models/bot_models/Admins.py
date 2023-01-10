@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, select, delete
+from sqlalchemy import Column, BigInteger, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Dao.DB_Postgres.session import AlchemyMaster

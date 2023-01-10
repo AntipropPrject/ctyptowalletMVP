@@ -1,8 +1,8 @@
 from aiogram.types import InlineKeyboardButton, KeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
-from Bot.keyboards.base_keys import rep_back_button
-from Bot.utilts.currency_helper import base_tokens
+from Dao.models import Algorithm
+from Dao.models.Token import Token
 
 
 def m_transaction():
@@ -15,20 +15,23 @@ def m_transaction():
     return mark.as_markup(resize_keyboard=True)
 
 
-def trans_token_kb(custom_token_list: list | None = None):
+def trans_token_kb(custom_token_list: list[Token]):
     mark = InlineKeyboardBuilder()
-    t_list = custom_token_list if custom_token_list else base_tokens.keys()
-    for token in t_list:
-        mark.row((InlineKeyboardButton(text=f"{token}", callback_data=f"transferToken_{token}")))
+    token_names = [token.token_name for token in custom_token_list]
+    for token_name in set(token_names):
+        mark.row((InlineKeyboardButton(text=f"{token_name}", callback_data=f"tToken_{token_name}")))
     mark.adjust(2)
+    mark.row((InlineKeyboardButton(text="<< Назад", callback_data="refresh_wallet")))
     return mark.as_markup(resize_keyboard=True)
 
 
-def trans_network_kb(custom_network_list: list | None = None):
+def trans_network_kb(custom_network_list: list[Algorithm] | None = None):
     mark = InlineKeyboardBuilder()
-    for network in custom_network_list:
-        mark.row((InlineKeyboardButton(text=f"{network}", callback_data=f"transferNetwork_{network}")))
+    algo_names = [algo.name for algo in custom_network_list]
+    for algo_name in set(algo_names):
+        mark.row((InlineKeyboardButton(text=f"{algo_name}", callback_data=f"tAlgos_{algo_name}")))
     mark.adjust(2)
+    mark.row((InlineKeyboardButton(text="<< Назад", callback_data="back")))
     return mark.as_markup(resize_keyboard=True)
 
 
@@ -40,7 +43,15 @@ def change_transfer_token():
 
 def kb_confirm_transfer():
     mark = InlineKeyboardBuilder()
-    mark.row((InlineKeyboardButton(text="Подтвердить перевод", callback_data="confirm_transfer_token")))
-    mark.row((InlineKeyboardButton(text="Отменить перевод", callback_data="cancel_transfer_token")))
+    mark.row((InlineKeyboardButton(text="✅ Подтвердить и отправить", callback_data="confirm_transfer_token")))
+    mark.row((InlineKeyboardButton(text="🔄 Изменить сумму", callback_data="change_amount")))
+    mark.row((InlineKeyboardButton(text="👨‍💼 Изменить получателя", callback_data="change_target")))
+    mark.row((InlineKeyboardButton(text="<< Назад", callback_data="back")))
     return mark.as_markup(resize_keyboard=True)
 
+
+def trans_result_keyboard():
+    mark = InlineKeyboardBuilder()
+    mark.row((InlineKeyboardButton(text="<< Назад в меню", callback_data="refresh_wallet")))
+    mark.row((InlineKeyboardButton(text="📆 История транзакций", callback_data="full_history")))
+    return mark.as_markup(resize_keyboard=True)

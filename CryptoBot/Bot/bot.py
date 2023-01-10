@@ -5,17 +5,16 @@ from aiogram.fsm.storage.redis import RedisStorage
 from AllLogs.bot_logger import main_logger
 from Bot.handlers import start_hand
 from Bot.handlers.admin_handlers import main_admin_hand
-from Bot.handlers.service_handlers import return_hand, AML_check_hand
-from Bot.handlers.Transaction_metods import transfer_hand
 from Bot.handlers.main_handlers import auth_hand, main_menu_hand, registration_hand
 from Bot.handlers.main_handlers.wallet_handlers import main_wallet_hand
-from Bot.middleware.alive_middle import AliveMiddleware
+from Bot.handlers.service_handlers import return_hand, AML_check_hand
 from Bot.middleware.alchemy_session_middle import DbSession
+from Bot.middleware.alive_middle import AliveMiddleware
 from Dao.DB_Postgres.session import AlchemyMaster, Base
 from Dao.DB_Redis import RedRedis
 from Dao.models.bot_models.bot_base import BotBase
-from Services.EntServices.TokenService import TokenService
-from bata import Data
+from Services.StaticInfoService import StaticInfoService
+from _config.variables import Data
 
 storage = RedisStorage.from_url(RedRedis.states_base_url())
 dp = Dispatcher(storage=storage)
@@ -55,7 +54,7 @@ async def bot_start():
 
     dp.include_router(AML_check_hand.router)
 
-    await TokenService.fill_base()
+    await StaticInfoService.fill_bases()
 
     session = aiohttp.ClientSession()
     await session.close()

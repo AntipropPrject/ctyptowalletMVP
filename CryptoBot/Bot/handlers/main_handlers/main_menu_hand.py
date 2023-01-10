@@ -40,26 +40,26 @@ async def main_menu(update: Message | CallbackQuery, state: FSMContext, bot: Bot
 # Из нижеследующих роутеров перенаправлять в определенный хэндлер для улучшения читаемости
 
 
-@router.message(F.text == "Кошелек")
+@router.message(F.text == "👛 Кошелек")
 async def menu_wallet_start(message: Message, bot: Bot, state: FSMContext):
     await my_wallet_start(event=message, state=state, bot=bot)
 
 
-@router.message(F.text == "AML")
+@router.message(F.text == "👁️‍🗨️ AML")
 async def menu_aml_start(message: Message):
     await message.answer('Здесь будет AML проверка')
 
 
-@router.message(F.text == "P2P")
+@router.message(F.text == "💸 P2P")
 async def menu_aml_start(message: Message):
     await message.answer('Здесь будет Р2Р')
 
 
-@router.message(F.text == "Настройки")
+@router.message(F.text == "⚙️ Настройки")
 async def menu_aml_start(message: Message):
     await message.answer('Тут будут настройки')
 
 
-@router.message(F.text == "Информация")
+@router.message(F.text == "💬 Поддержка")
 async def menu_aml_start(message: Message):
     await message.answer('Информирую о неготовности меню информации')

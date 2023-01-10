@@ -1,6 +1,6 @@
 from sqlalchemy.engine import CursorResult
 
-from Dao.DB_Postgres.session import create_session, AlchemyMaster
+from Dao.DB_Postgres.session import AlchemyMaster
 
 
 async def getPkey_by_address_id(address_id:str)-> str:

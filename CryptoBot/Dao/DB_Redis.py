@@ -1,7 +1,7 @@
 import redis.asyncio as aioredis
 from redis.asyncio.connection import ConnectionPool
 
-from bata import Data
+from _config.variables import Data
 
 
 class RedRedis:
@@ -47,6 +47,13 @@ class DataRedis(RedRedis):
             return data
 
     @classmethod
+    async def delete_data(cls, key: str):
+        await cls.data_redis.delete(key)
+        retry = await cls.get_data(key)
+        if retry:
+            raise Exception(f'Key {key} is not deleted!')
+
+    @classmethod
     async def update_user_life(cls, user_id: int):
         alive_state = await cls.get_data(f"Users: {user_id}: {cls.auth_key}")
         new_value = alive_state if alive_state else "False"
@@ -56,6 +63,12 @@ class DataRedis(RedRedis):
     @classmethod
     async def authorize(cls, telegram_user_id: int, uid: str):
         await cls.set_data(f"Users: {telegram_user_id}: {cls.auth_key}", uid, ttl=6000)
+
+
+    @classmethod
+    async def log_off(cls, telegram_user_id: int):
+        await cls.delete_data(f"Users: {telegram_user_id}: {cls.auth_key}")
+
 
     @classmethod
     async def auth_cooldown(cls, telegram_user_id: int, add: bool = False):

@@ -5,6 +5,8 @@ class TransactionStates(StatesGroup):
 
 
 class Trs_transfer(StatesGroup):
+    choose_where = State()
+    amount = State()
     main = State()
     new_transfer = State()
     set_network = State()

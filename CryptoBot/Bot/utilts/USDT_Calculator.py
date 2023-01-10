@@ -1,5 +1,4 @@
 import json
-import threading
 
 import requests
 
@@ -18,7 +17,8 @@ class USDT_Calculator:
         print(result)
         return result
 
-    def __get_lastprice_from_dresponse(self,response_json:str):
+
+    def __get_lastprice_from_response(self, response_json:str):
         response_dict: dict[str, str] = json.loads(response_json)
         value = response_dict["lastPrice"]
         return float(value)

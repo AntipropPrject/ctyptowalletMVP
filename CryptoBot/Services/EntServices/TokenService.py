@@ -3,11 +3,12 @@ from contextlib import suppress
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from Bot.utilts.currency_helper import base_tokens, blockchains
-from Bot.utilts.settings import DEBUG_MODE
-from Dao.DB_Postgres.session import create_session, AlchemyMaster
-from Dao.models.Address import Address
+from Bot.utilts.currency_helper import base_tokens
+from _config.settings import DEBUG_MODE
+from Dao.DB_Postgres.session import AlchemyMaster
+from Dao.models.Network import Network
 from Dao.models.Owner import Owner
 from Dao.models.Token import Token
 
@@ -38,13 +39,17 @@ class TokenService:
                             return result(address_obj, None)
 
     @staticmethod
-    async def get_token(token_name: str, token_network: str) -> Token:
-        session_connect = await AlchemyMaster.create_session()
-        async with session_connect() as session:
-            query = select(Token).filter(Token.token_name == token_name, Token.network == token_network)
-            result = (await session.execute(query)).first()
+    @AlchemyMaster.alchemy_session
+    async def get_token(token_name: str, token_algorithm: str,
+                        *,
+                        main_net: bool = True, alchemy_session: AsyncSession) -> Token:
+            query = select(Token).filter(Token.token_name == token_name, Token.algorithm_name == token_algorithm)
+            result = (await alchemy_session.execute(query)).unique()
             if result:
-                return result[0]
+                for raw in list(result):
+                    token = raw[0]
+                    if token.network.mainnet == main_net:
+                        return token
 
     @staticmethod
     async def form_base_token(name: str):  # Изменить метод, когда улучшится хранилище базовых токенов
@@ -81,11 +86,31 @@ class TokenService:
 
 
     @staticmethod
-    async def tokens_for_network(network: str):
+    @AlchemyMaster.alchemy_session
+    async def tokens_for_network(network: str, *, alchemy_session: AsyncSession):
         session_connect = await AlchemyMaster.create_session()
         async with session_connect() as session:
             tokens = [token[0] for token in list(
                 (await session.execute(select(Token).filter(Token.network == network))).unique()
             )]
             print(tokens)
+        return tokens
+
+
+    @staticmethod
+    @AlchemyMaster.alchemy_session
+    async def alorithms_for_token_name(token_name: str, alchemy_session: AsyncSession):
+        tokens = list(
+            (await alchemy_session.execute(select(Token).filter(Token.token_name == token_name))).unique()
+        )
+        algorithms = [token.algorithm for raw in tokens for token in raw]
+        return algorithms
+
+
+    @staticmethod
+    @AlchemyMaster.alchemy_session
+    async def tokens_for_blockchain(blockchain_name: str, alchemy_session: AsyncSession):
+        query = select(Token).filter(Token.network.has(Network.blockchain == blockchain_name))
+        result = list((await alchemy_session.execute(query)).unique())
+        tokens = [raw[0] for raw in result]
         return tokens

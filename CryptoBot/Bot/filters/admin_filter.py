@@ -3,7 +3,7 @@ from aiogram.types import CallbackQuery, Message
 
 from Dao.DB_Postgres.session import AlchemyMaster
 from Dao.models.bot_models.Admins import Admin
-from bata import Data
+from _config.variables import Data
 
 
 class IsAdmin(Filter):

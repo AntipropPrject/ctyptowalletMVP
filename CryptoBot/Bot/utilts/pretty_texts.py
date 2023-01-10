@@ -1,3 +1,5 @@
+from Bot.utilts.FunctionalService import debug_filter
+from Bot.utilts.USDT_Calculator import USDT_Calculator
 from Dao.DB_Redis import DataRedis
 from Dao.models.Address import Address
 from Services.EntServices.AddressService import AddressService
@@ -21,13 +23,17 @@ async def all_wallets_text(u_id: str):
                 adress_obj = addressess.get(address)
                 balances = await AddressService.get_address_balances(address=address)
                 for token in adress_obj.tokens:
-                    balance = balances.get(token.token_name, 'Iternal Error!')
-                    text += f"{token.token_name}: {balance}\n"
-                fee += adress_obj.get_address_freezed_fee()
+                    if debug_filter(token):
+                        balance = balances.get(token.token_name, 'Iternal Error!')
+                        text += f"{token.token_name}: {balance}\n"
+                    try:
+                        fee += USDT_Calculator().calculate(adress_obj.get_address_freezed_fee(), token.token_name)
+                    except:
+                        fee += 0
 
         text += "<code>——————————————————————</code>\n"
         if fee:
-            text += f'За пользование сервисом была заморожена комиссия: {fee} USDT\n'
+            text += f'За пользование сервисом была заморожена комиссия: {fee} USDT\n' #TODO  Здесь сделать детализацию для каждого токена в сети
     else:
         text += '<i>▫️ Вы пока не отслеживаете ни один токен.</i>'
     return text

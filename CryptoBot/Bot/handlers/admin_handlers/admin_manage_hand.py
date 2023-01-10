@@ -1,15 +1,10 @@
 from aiogram import Router, Bot, F
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from Bot.filters.admin_filter import IsAdmin
-from Bot.filters.auth_filter import NotAuthFilter
-from Bot.handlers.main_handlers.auth_hand import you_need_tb_authenticated
-from Bot.keyboards.admin_keys import main_admin_kb, admin_manage_kb, admin_back, admin_approve
+from Bot.keyboards.admin_keys import admin_manage_kb, admin_back, admin_approve
 from Bot.states.admin_states import AdminState
 from Bot.utilts.mmanager import MManager
 from Dao.models.bot_models import Admin

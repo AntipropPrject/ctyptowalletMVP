@@ -1,4 +1,3 @@
-from contextlib import suppress
 from string import ascii_letters, digits
 
 from Crypto.Random import random
@@ -8,15 +7,10 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Bot.exeptions.wallet_ex import DuplicateToken
-from Bot.utilts.currency_helper import base_tokens
-from Bot.utilts.settings import DEBUG_MODE
-from Dao.DB_Postgres.session import create_session, AlchemyMaster
+from Dao.DB_Postgres.session import AlchemyMaster
 from Dao.models.Address import Address
 from Dao.models.Owner import Owner
-from Dao.models.Token import Token
 from Dao.models.Wallet import Wallet
-from Services.EntServices.TokenService import TokenService
 
 
 class OwnerService:
@@ -104,5 +98,5 @@ class OwnerService:
                     Wallet.owner_id == u_id, Wallet.blockchain == blockchain).scalar_subquery()))
                        ).unique()
             for address in addresses:
-                addresses_list.append(address[0].address)
+                addresses_list.append(address[0])
             return addresses_list
